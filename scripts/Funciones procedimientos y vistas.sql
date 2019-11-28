@@ -817,6 +817,36 @@ values (100000,to_timestamp('06/06/08 18:30:34,000000000','DD/MM/RR HH24:MI:SSXF
 Insert into DBA_JULIAN.DEPOSITOS (VALOR,FECHA,ID_USUARIO,ID_ESTADO,ID_MEDIO_DE_PAGO,SOFT_DELETION) 
 values ('500000',to_timestamp('05/02/08 18:12:54,000000000','DD/MM/RR HH24:MI:SSXFF'),'984','4','1','1');
  
+/*Crear una función que reciba un argumento de tipo número, 
+este representará el id de un usuario; 
+la función retornará TRUE si el usuario se encuentra logueado en el sistema. 
+(Usar esta función en todos los procedimientos donde se requiera validar que el usuario tenga una sesión activa.)*/
+
+CREATE OR REPLACE FUNCTION LOGIN (ID_US IN NUMBER) RETURN NUMBER AS
+    CONEXION NUMBER;
+BEGIN
+    CONEXION := (SELECT ESTADO_CONEXION FROM SESIONES  WHERE ID_USUARIO = ID_US AND ROWNUM = 1 ORDER BY (ID) DESC);
+    RETURN CONEXION;
+END;
+
+EXEC LOGIN (1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

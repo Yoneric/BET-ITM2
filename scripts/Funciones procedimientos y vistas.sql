@@ -903,17 +903,42 @@ la función retornará TRUE si el usuario se encuentra logueado en el sistema.
 (Usar esta función en todos los procedimientos donde se requiera validar que el usuario tenga una sesión activa.)
 */
 
-CREATE OR REPLACE FUNCTION LOGIN (ID_US IN NUMBER) RETURN NUMBER AS
+CREATE OR REPLACE FUNCTION LOGIN (ID_US IN NUMBER) RETURN NUMBER IS
     CONEXION NUMBER;
 BEGIN
-    CONEXION := (SELECT ESTADO_CONEXION FROM SESIONES  WHERE ID_USUARIO = ID_US AND ROWNUM = 1 ORDER BY (ID) DESC);
+    SELECT ESTADO_CONEXION INTO CONEXION FROM SESIONES  WHERE ID_USUARIO = ID_US AND ROWNUM = 1 ORDER BY (ID) DESC;
     RETURN CONEXION;
 END;
 
-EXEC LOGIN (1);
+SELECT LOGIN(1) FROM DUAL;
 
+/*
+Crear un procedimiento almacenado que reciba el nombre de la tabla y el id del registro que se desea actualizar, 
+la idea de este procedimiento es que active el soft deletion de dicho registro ubicado en dicha tabla. 
+Deberá tener manejo de excepciones dado el caso que el nombre de la tabla y/o el id no existan. 
+*/
 
+CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO (NOMBRE_TABLA VARCHAR2, ID_REGISTRO NUMBER) AS
+    sql_stmt  VARCHAR2(255);
+BEGIN
+    sql_stmt := 'UPDATE '|| NOMBRE_TABLA || ' SET SOFT_DELETION = 0 WHERE ID = '|| ID_REGISTRO;
+    EXECUTE IMMEDIATE sql_stmt;
+    
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE ('El ID no existe en la tabla.');
+END;
 
+update usuarios set soft_deletion = 0 where id= 100;
+
+/*
+Crear un procedimiento que coloque un partido en estado "FINALIZADO", 
+en ese momento deberá calcular las ganancias y pérdidas de cada apuesta hecha asociada a ese partido.
+*/
+
+CREATE OR REPLACE PROCEDURE PARTIDO_FINALIZADO () AS
+
+<<<<<<< HEAD
 CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO(ID_CAMPO NUMBER, NOMBRE_TABLA VARCHAR2)                                             
 IS
    err_num NUMBER;
@@ -932,10 +957,24 @@ BEGIN
 END ;
 
 EXEC ELIMINAR_REGISTRO ('hola','PARTIDO')
+=======
+BEGIN
+    UPDATE PARTIDOS SET ESTADO = 'FINALIZADO'
+    SELECT * FROM PARTIDOS PA INNER JOIN CUOTAS CU
+    ON PA.ID = CU.ID_PARTIDO
+    INNER JOIN DETALLES_APUESTAS DAP
+    ON CU.ID = DAP.ID_CUOTA
+    INNER JOIN APUESTAS APU
+    ON DAP.ID_APUESTA = APU.ID
+    
+END;
 
-SELECT * FROM PARTIDOS
 
-SELECT SOFT_DELETION FROM PARTIDOS WHERE ID = 32
+
+
+>>>>>>> d30de88acddfcefa589a888588db472a3060df08
+
+
 
 
 

@@ -916,15 +916,22 @@ EXEC LOGIN (1);
 
 CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO(ID_CAMPO NUMBER, NOMBRE_TABLA VARCHAR2)                                             
 IS
-  mi_codigo varchar2(500);
+   err_num NUMBER;
+   err_msg VARCHAR2 (255);
+  
+  consulta varchar2(500);
 BEGIN
-  mi_codigo := 'UPDATE '||  NOMBRE_TABLA ||' SET SOFT_DELETION = 0 WHERE ID ='|| ID_CAMPO ;
-
-  EXECUTE IMMEDIATE mi_codigo;
-   
+  consulta := 'UPDATE '||  NOMBRE_TABLA ||' SET SOFT_DELETION = 0 WHERE ID ='|| ID_CAMPO ;
+  EXECUTE IMMEDIATE consulta;
+  EXCEPTION
+   WHEN OTHERS THEN
+    err_num := SQLCODE;
+     err_msg := SQLERRM;
+     DBMS_OUTPUT.put_line('Error:'||TO_CHAR(err_num));
+     DBMS_OUTPUT.put_line(err_msg);
 END ;
 
-EXEC ELIMINAR_REGISTRO (32,'PARTIDOS')
+EXEC ELIMINAR_REGISTRO ('hola','PARTIDO')
 
 SELECT * FROM PARTIDOS
 

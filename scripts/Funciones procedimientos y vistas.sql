@@ -931,6 +931,45 @@ END;
 
 update usuarios set soft_deletion = 0 where id= 100;
 
+
+CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO(ID_CAMPO NUMBER, NOMBRE_TABLA VARCHAR2)                                             
+IS
+   err_num NUMBER;
+   err_msg VARCHAR2 (255);
+   i NUMBER;
+  
+  consulta varchar2(500);
+BEGIN
+  consulta := 'UPDATE '||  NOMBRE_TABLA ||' SET SOFT_DELETION = 0 WHERE ID ='|| ID_CAMPO ;
+  EXECUTE IMMEDIATE consulta;
+  i := SQL%rowcount; 
+  
+  if i = 0 THEN
+   
+   dbms_output.put_line('No se ha eliminado ningún registro: ');
+  
+END IF;
+  EXCEPTION
+  
+   WHEN no_data_found then
+      dbms_output.put_line('No se ha encontrado ningún registro: ');
+      
+   WHEN value_error then   
+      dbms_output.put_line('Se ha producido un error numérico ');
+  
+   WHEN OTHERS THEN
+    err_num := SQLCODE;
+     err_msg := SQLERRM;
+     DBMS_OUTPUT.put_line('La tabla ' || NOMBRE_TABLA ||' no existe');
+     
+END ;
+
+EXEC ELIMINAR_REGISTRO (1,'PARTIDOS')
+
+UPDATE PARTIDOS  SET SOFT_DELETION = 0  WHERE ID = 2
+
+SELECT * FROM PARTIDOS
+
 /*
 Crear un procedimiento que coloque un partido en estado "FINALIZADO", 
 en ese momento deberá calcular las ganancias y pérdidas de cada apuesta hecha asociada a ese partido.
@@ -938,26 +977,6 @@ en ese momento deberá calcular las ganancias y pérdidas de cada apuesta hecha as
 
 CREATE OR REPLACE PROCEDURE PARTIDO_FINALIZADO () AS
 
-<<<<<<< HEAD
-CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO(ID_CAMPO NUMBER, NOMBRE_TABLA VARCHAR2)                                             
-IS
-   err_num NUMBER;
-   err_msg VARCHAR2 (255);
-  
-  consulta varchar2(500);
-BEGIN
-  consulta := 'UPDATE '||  NOMBRE_TABLA ||' SET SOFT_DELETION = 0 WHERE ID ='|| ID_CAMPO ;
-  EXECUTE IMMEDIATE consulta;
-  EXCEPTION
-   WHEN OTHERS THEN
-    err_num := SQLCODE;
-     err_msg := SQLERRM;
-     DBMS_OUTPUT.put_line('Error:'||TO_CHAR(err_num));
-     DBMS_OUTPUT.put_line(err_msg);
-END ;
-
-EXEC ELIMINAR_REGISTRO ('hola','PARTIDO')
-=======
 BEGIN
     UPDATE PARTIDOS SET ESTADO = 'FINALIZADO'
     SELECT * FROM PARTIDOS PA INNER JOIN CUOTAS CU
@@ -972,7 +991,6 @@ END;
 
 
 
->>>>>>> d30de88acddfcefa589a888588db472a3060df08
 
 
 

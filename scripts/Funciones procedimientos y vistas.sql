@@ -1,59 +1,64 @@
 -- PUNTO 1 VISTAS
 
-/* A.  Sumar el valor ganado de todas las apuestas de los usuarios que están en estado ganado de aquellos partidos asociados 
-a las apuestas que se efectuaron en el trancurso de la semana y mostrarlas ordenadas por el valor más alto; El nombre de la vista será 
-"GANADORES_SEMANALES" y tendrá dos columnas: nombre completo y valor acumulado.
-
-Considerar el siguiente query select trunc(sysdate, 'DAY') start_of_the_week, trunc(sysdate, 'DAY')+6 end_of_the_week from dual;*/
+/* 
+A.  Sumar el valor ganado de todas las apuestas de los usuarios que están 
+en estado ganado de aquellos partidos asociados a las apuestas 
+que se efectuaron en el trancurso de la semana y mostrarlas ordenadas por el valor más alto; 
+El nombre de la vista será "GANADORES_SEMANALES" y tendrá dos columnas: nombre completo y valor acumulado.
+*/
 
 CREATE OR REPLACE VIEW GANADORES_SEMANALES AS
-SELECT us.primer_nombre ||' ' ||US.SEGUNDO_NOMBRE||' ' ||us.primer_apellido ||' '|| US.SEGUNDO_APELLIDO  "NOMBRE COMPLETO", sum(ap.total_ganancias)"TOTAL GANANCIAS" 
-FROM usuarios us INNER JOIN apuestas ap
-ON ap.id_usuario = us.id
-WHERE AP.FECHA BETWEEN (SELECT trunc(sysdate, 'DAY') FROM DUAL) AND (SELECT trunc(sysdate, 'DAY')+6 FROM dual)
-GROUP BY us.primer_nombre,SEGUNDO_NOMBRE, us.primer_apellido,SEGUNDO_APELLIDO;
+  SELECT us.primer_nombre ||' ' ||US.SEGUNDO_NOMBRE||' ' ||us.primer_apellido ||' '|| US.SEGUNDO_APELLIDO  "NOMBRE COMPLETO", sum(ap.total_ganancias)"TOTAL GANANCIAS" 
+  FROM usuarios us INNER JOIN apuestas ap
+  ON ap.id_usuario = us.id
+  WHERE AP.FECHA BETWEEN (SELECT trunc(sysdate, 'DAY') FROM DUAL) AND (SELECT trunc(sysdate, 'DAY')+6 FROM dual)
+  GROUP BY us.primer_nombre,SEGUNDO_NOMBRE, us.primer_apellido,SEGUNDO_APELLIDO;
 
 SELECT * FROM GANADORES_SEMANALES
 
 
-/* B.  Nombre de la vista: DETALLES_APUESTAS. Esta vista deberá mostrar todos los detalles de apuestas simples que se 
-efectuaron para un boleto en particular, tal como se muestra en el siguiente ejemplo: */
+/* 
+B.  Nombre de la vista: DETALLES_APUESTAS. Esta vista deberá mostrar todos 
+los detalles de apuestas simples que se efectuaron para un boleto en particular.
+*/
 
 CREATE OR REPLACE VIEW DETALLE_APUESTAS AS 
-SELECT  E.EQUIPO ||' VS '|| E2.EQUIPO "PARTIDO", DAP.OPCION_CUOTA, C.CUOTA_GANADORA,CA.NOMBRE "CATEGORÍA", AP.ID "APUESTA"
-FROM   PARTIDOS P  
-INNER JOIN  EQUIPOS E  
-ON E.ID = P.ID_LOCAL 
-INNER JOIN EQUIPOS E2 
-ON E2.ID = P.ID_VISITANTE 
-INNER JOIN CUOTAS C
-ON P.ID = C.ID_PARTIDO 
-INNER JOIN CATEGORIAS CA
-ON CA.ID = C.ID_CATEGORIA
-INNER JOIN DETALLES_APUESTAS DAP
-ON C.ID = DAP.ID_CUOTA
-INNER JOIN APUESTAS AP
-ON AP.ID = DAP.ID_APUESTA
+  SELECT  E.EQUIPO ||' VS '|| E2.EQUIPO "PARTIDO", DAP.OPCION_CUOTA, C.CUOTA_GANADORA,CA.NOMBRE "CATEGORÍA", AP.ID "APUESTA"
+  FROM   PARTIDOS P  
+  INNER JOIN  EQUIPOS E  
+  ON E.ID = P.ID_LOCAL 
+  INNER JOIN EQUIPOS E2 
+  ON E2.ID = P.ID_VISITANTE 
+  INNER JOIN CUOTAS C
+  ON P.ID = C.ID_PARTIDO 
+  INNER JOIN CATEGORIAS CA
+  ON CA.ID = C.ID_CATEGORIA
+  INNER JOIN DETALLES_APUESTAS DAP
+  ON C.ID = DAP.ID_CUOTA
+  INNER JOIN APUESTAS AP
+  ON AP.ID = DAP.ID_APUESTA
 
 SELECT * FROM DETALLE_APUESTAS WHERE APUESTA = 1001
 
 
-/* C.  Nombre de la vista: RESUMEN_APUESTAS. Esta vista mostrará el resumen de cada apuesta efectuada en el sistema, 
-la información de la siguiente imagen corresponderá a cada columna (Omitir la siguiente columna Pago máx. incl. 5% bono 
-(293.517,58 $)). La idea es que cuando se llame la vista, muestre la información únicamente de esa apuesta en particular: 
-SELECT * FROM RESUMEN_APUESTAS WHERE APUESTAS.ID = 123. */
+/* 
+C.  Nombre de la vista: RESUMEN_APUESTAS. Esta vista mostrará el resumen de 
+cada apuesta efectuada en el sistema. La idea es que cuando se llame la vista, 
+muestre la información únicamente de esa apuesta en particular: 
+SELECT * FROM RESUMEN_APUESTAS WHERE APUESTAS.ID = 123. 
+*/
 
 CREATE OR REPLACE VIEW RESUMEN_APUESTAS AS
-SELECT AP.ID "APUESTA" ,COUNT(*) "NÚMERO DE APUESTAS",COUNT(*)||' x $'|| DAP.VALOR_APOSTADO || ' = $' || SUM(DAP.VALOR_APOSTADO) "VALOR TOTAL APUESTA",MAX (OPCION_CUOTA)  "MAX. TOTAL CUOTA"
-FROM  DETALLES_APUESTAS DAP
-INNER JOIN APUESTAS AP
-ON AP.ID = DAP.ID_APUESTA
-GROUP BY DAP.VALOR_APOSTADO,AP.ID
+  SELECT AP.ID "APUESTA" ,COUNT(*) "NÚMERO DE APUESTAS",COUNT(*)||' x $'|| DAP.VALOR_APOSTADO || ' = $' || SUM(DAP.VALOR_APOSTADO) "VALOR TOTAL APUESTA",MAX (OPCION_CUOTA)  "MAX. TOTAL CUOTA"
+  FROM  DETALLES_APUESTAS DAP
+  INNER JOIN APUESTAS AP
+  ON AP.ID = DAP.ID_APUESTA
+  GROUP BY DAP.VALOR_APOSTADO,AP.ID
 
 SELECT * FROM RESUMEN_APUESTAS WHERE APUESTA = 1001
 
-/*D. 
-Para la siguiente vista deberán alterar el manejo de sesiones de usuario, 
+/*
+D.  Para la siguiente vista deberán alterar el manejo de sesiones de usuario, 
 el sistema deberá guardar el timestamp de la hora de sesión 
 y el timestamp del fin de sesión, si el usuario tiene el campo fin de sesión en null, 
 significa que la sesión está activa. 
@@ -63,8 +68,8 @@ cuántas horas lleva en el sistema con respecto a la hora actual,
 la siguiente columna será la cantidad de horas seleccionada 
 en las preferencias de usuario, finalmente, habrá una columna 
 que reste cuánto tiempo le falta para que se cierre la sesión 
-(si aparece un valor negativo, significa que el usuario excedió el tiempo en el sistema)*/
-
+(si aparece un valor negativo, significa que el usuario excedió el tiempo en el sistema)
+*/
 
 
 CREATE OR REPLACE FUNCTION DIFERENCIA_HORAS(HORA_1 TIMESTAMP, HORA_2 TIMESTAMP) RETURN NUMBER as
@@ -125,10 +130,14 @@ END;
 
 
 -- TRIGGERS
-/* Crear un trigger para TODAS las tablas que tienen creadas, el trigger deberá llenar la información de la tabla de auditoría 
-cuando se produce una INSERCIÓN, ACTUALIZACIÓN y ELIMINACIÓN de registros (Recordar que estamos trabajando con SOFT deletion y
-por ende ningún usuario debería tener el privilegio de ELIMINAR registros). Para obtener la IP desde donde se produce la conexión,
-usar: SQL> SELECT SYS_CONTEXT('USERENV','IP_ADDRESS') FROM dual;*/
+/* 
+A.  Crear un trigger para TODAS las tablas que tienen creadas, 
+el trigger deberá llenar la información de la tabla de auditoría 
+cuando se produce una INSERCIÓN, ACTUALIZACIÓN y ELIMINACIÓN de registros 
+(Recordar que estamos trabajando con SOFT deletion y 
+por ende ningún usuario debería tener el privilegio de ELIMINAR registros). 
+Para obtener la IP desde donde se produce la conexión.
+*/
   
 CREATE OR REPLACE TRIGGER AUDITORIA_USUARIOS
   AFTER INSERT OR UPDATE
@@ -764,9 +773,11 @@ BEGIN
  END;
  
  
- /*B
- Crear un(os) trigger(s) que permita(n) mantener el saldo del usuario ACTUALIZADO, es decir, si se produce un retiro, una recarga,
- una apuesta o hay ganancias de una apuesta, automáticamente deberá actualizar el saldo disponible del usuario.*/
+ /*
+ B. Crear un(os) trigger(s) que permita(n) mantener el saldo del usuario ACTUALIZADO, 
+ es decir, si se produce un retiro, una recarga, una apuesta o hay ganancias de una apuesta, 
+ automáticamente deberá actualizar el saldo disponible del usuario.
+ */
  
 
  CREATE OR REPLACE TRIGGER SALDO_APUESTAS
@@ -799,16 +810,15 @@ CREATE OR REPLACE TRIGGER SALDO_DEPOSITOS
  BEGIN 
   UPDATE USUARIOS SET SALDO = SALDO + :new.VALOR WHERE USUARIOS.ID = :new.id_usuario;
  END;
- 
-select * from retiros
-
-select * from depositos
-
-select saldo from usuarios where id  = 984
 
  
- Insert into DBA_JULIAN.APUESTAS (ID_USUARIO,VALOR_TOTAL,TOTAL_GANANCIAS,FECHA,ID_ESTADO,SOFT_DELETION) 
- values (1008,'0','0',to_date('18/07/19','DD/MM/RR'),'3','1');
+select * from retiros;
+select * from depositos;
+select saldo from usuarios where id  = 984;
+
+ 
+Insert into DBA_JULIAN.APUESTAS (ID_USUARIO,VALOR_TOTAL,TOTAL_GANANCIAS,FECHA,ID_ESTADO,SOFT_DELETION) 
+values (1008,'0','0',to_date('18/07/19','DD/MM/RR'),'3','1');
 
  
 Insert into DBA_JULIAN.RETIROS (VALOR_RETIRO,FECHA_SOLICITUD,FECHA_DESEMBOLSO,BANCO,CUENTA_BANCARIA,REQUISITO,ID_USUARIO,ID_COMPROBANTE,SOFT_DELETION)
@@ -818,17 +828,19 @@ values (100000,to_timestamp('06/06/08 18:30:34,000000000','DD/MM/RR HH24:MI:SSXF
 Insert into DBA_JULIAN.DEPOSITOS (VALOR,FECHA,ID_USUARIO,ID_ESTADO,ID_MEDIO_DE_PAGO,SOFT_DELETION) 
 values ('500000',to_timestamp('05/02/08 18:12:54,000000000','DD/MM/RR HH24:MI:SSXFF'),'984','4','1','1');
  
-/*C
-Crear un trigger asociado a la tabla PARTIDOS, este trigger se disparará solamente cuando 
+
+/*
+C. Crear un trigger asociado a la tabla PARTIDOS, este trigger se disparará solamente cuando 
 el partido pase a estado "FINALIZADO". El propósito de este trigger es ejecutar el o 
 los procedimientos hechos para liquidar las ganancias y pérdidas de los usuarios 
 que apostaron a ese partido.
 */
-drop trigger ACTUALIZA_PARTIDOS
 
 CREATE OR REPLACE TRIGGER ACTUALIZA_PARTIDOS
-  BEFORE UPDATE OF ESTADO ON PARTIDOS
-  FOR EACH ROW
+BEFORE UPDATE 
+OF ESTADO 
+ON PARTIDOS
+FOR EACH ROW
  
 DECLARE 
   
@@ -850,54 +862,52 @@ BEGIN
 END; 
 
 
-UPDATE PARTIDOS SET ESTADO = 'FINALIZADO' WHERE ID = 31
-
+UPDATE PARTIDOS SET ESTADO = 'FINALIZADO' WHERE ID = 31;
 SELECT ESTADO FROM PARTIDOS WHERE ID = 31;
 
-/*D
-Crear un trigger asociado a la tabla DETALLES_APUESTAS, este trigger mantendrá actualizado el 
-campo "valor_total" de la tabla APUESTAS*/
+/*
+D. Crear un trigger asociado a la tabla DETALLES_APUESTAS, este trigger mantendrá actualizado el 
+campo "valor_total" de la tabla APUESTAS
+*/
 
 
 CREATE OR REPLACE TRIGGER ACTUALIZA_VALOR_APUESTA
- BEFORE  INSERT
- ON DETALLES_APUESTAS
+BEFORE  INSERT
+ON DETALLES_APUESTAS
 FOR EACH ROW
- DECLARE 
+
+DECLARE 
  
- CONTADOR NUMBER;
+  CONTADOR NUMBER;
  
- BEGIN 
- 
- SELECT COUNT(*) INTO CONTADOR FROM DETALLES_APUESTAS WHERE ID_APUESTA = :new.ID_APUESTA;
- 
+BEGIN 
+
+  SELECT COUNT(*) INTO CONTADOR FROM DETALLES_APUESTAS WHERE ID_APUESTA = :new.ID_APUESTA;
+
   IF CONTADOR = 0 THEN 
-  
-  UPDATE APUESTAS SET VALOR_TOTAL = :new.VALOR_APOSTADO WHERE ID = :new.ID_APUESTA;
- 
-  
- ELSE  
- 
-  UPDATE APUESTAS SET VALOR_TOTAL = ((SELECT SUM(VALOR_APOSTADO) FROM DETALLES_APUESTAS WHERE ID_APUESTA =  :new.ID_APUESTA) + :new.VALOR_APOSTADO) WHERE ID = :new.ID_APUESTA;
- 
-END IF; 
- END;
+
+    UPDATE APUESTAS SET VALOR_TOTAL = :new.VALOR_APOSTADO WHERE ID = :new.ID_APUESTA;
+
+  ELSE  
+
+    UPDATE APUESTAS SET VALOR_TOTAL = ((SELECT SUM(VALOR_APOSTADO) FROM DETALLES_APUESTAS WHERE ID_APUESTA =  :new.ID_APUESTA) + :new.VALOR_APOSTADO) WHERE ID = :new.ID_APUESTA;
+
+  END IF; 
+END;
  
  
 SELECT SUM(VALOR_APOSTADO) FROM DETALLES_APUESTAS WHERE ID_APUESTA = 1084;
-
 SELECT * FROM APUESTAS WHERE ID = 1084;
-
-DELETE FROM DETALLES_APUESTAS WHERE ID_APUESTA = 1084
-
-UPDATE APUESTAS SET VALOR_TOTAL = 0 WHERE ID = 1084
+DELETE FROM DETALLES_APUESTAS WHERE ID_APUESTA = 1084;
+UPDATE APUESTAS SET VALOR_TOTAL = 0 WHERE ID = 1084;
 
 Insert into DBA_JULIAN.DETALLES_APUESTAS (OPCION_CUOTA,CUOTA_GANADORA,ESTADO,VALOR_APOSTADO,ID_APUESTA,ID_CUOTA,SOFT_DELETION) values 
 ('1.60','1.60','GANADO',30000,1084,101,1);
 
+
 ------------------------Funciones---------------------------------------------------------------------------------
 /*
-Crear una función que reciba un argumento de tipo número, 
+A. Crear una función que reciba un argumento de tipo número, 
 este representará el id de un usuario; 
 la función retornará TRUE si el usuario se encuentra logueado en el sistema. 
 (Usar esta función en todos los procedimientos donde se requiera validar que el usuario tenga una sesión activa.)
@@ -905,6 +915,7 @@ la función retornará TRUE si el usuario se encuentra logueado en el sistema.
 
 CREATE OR REPLACE FUNCTION LOGIN (ID_US IN NUMBER) RETURN NUMBER IS
     CONEXION NUMBER;
+
 BEGIN
     SELECT ESTADO_CONEXION INTO CONEXION FROM SESIONES  WHERE ID_USUARIO = ID_US AND ROWNUM = 1 ORDER BY (ID) DESC;
     RETURN CONEXION;
@@ -912,66 +923,52 @@ END;
 
 SELECT LOGIN(1) FROM DUAL;
 
+
 /*
-Crear un procedimiento almacenado que reciba el nombre de la tabla y el id del registro que se desea actualizar, 
+B. Crear un procedimiento almacenado que reciba el nombre de la tabla y el id del registro que se desea actualizar, 
 la idea de este procedimiento es que active el soft deletion de dicho registro ubicado en dicha tabla. 
 Deberá tener manejo de excepciones dado el caso que el nombre de la tabla y/o el id no existan. 
 */
 
-CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO (NOMBRE_TABLA VARCHAR2, ID_REGISTRO NUMBER) AS
-    sql_stmt  VARCHAR2(255);
-BEGIN
-    sql_stmt := 'UPDATE '|| NOMBRE_TABLA || ' SET SOFT_DELETION = 0 WHERE ID = '|| ID_REGISTRO;
-    EXECUTE IMMEDIATE sql_stmt;
-    
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE ('El ID no existe en la tabla.');
-END;
+CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO(ID_CAMPO NUMBER, NOMBRE_TABLA VARCHAR2) IS
+  err_num NUMBER;
+  err_msg VARCHAR2(255);
+  i NUMBER;  
+  consulta VARCHAR2(500);
 
-update usuarios set soft_deletion = 0 where id= 100;
-
-
-CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO(ID_CAMPO NUMBER, NOMBRE_TABLA VARCHAR2)                                             
-IS
-   err_num NUMBER;
-   err_msg VARCHAR2 (255);
-   i NUMBER;
-  
-  consulta varchar2(500);
 BEGIN
   consulta := 'UPDATE '||  NOMBRE_TABLA ||' SET SOFT_DELETION = 0 WHERE ID ='|| ID_CAMPO ;
   EXECUTE IMMEDIATE consulta;
   i := SQL%rowcount; 
+
+  IF i = 0 THEN
+
+    DBMS_OUTPUT.PUT_LINE('No se ha eliminado ningún registro: ');
   
-  if i = 0 THEN
-   
-   dbms_output.put_line('No se ha eliminado ningún registro: ');
+  END IF;
+
+EXCEPTION
   
-END IF;
-  EXCEPTION
-  
-   WHEN no_data_found then
-      dbms_output.put_line('No se ha encontrado ningún registro: ');
-      
-   WHEN value_error then   
-      dbms_output.put_line('Se ha producido un error numérico ');
-  
-   WHEN OTHERS THEN
+  WHEN no_data_found then
+    DBMS_OUTPUT.PUT_LINE('No se ha encontrado ningún registro: ');
+
+  WHEN value_error then   
+    DBMS_OUTPUT.PUT_LINE('Se ha producido un error numérico ');
+
+  WHEN OTHERS THEN
     err_num := SQLCODE;
-     err_msg := SQLERRM;
-     DBMS_OUTPUT.put_line('La tabla ' || NOMBRE_TABLA ||' no existe');
-     
+    err_msg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE('La tabla ' || NOMBRE_TABLA ||' no existe');
+         
 END ;
 
-EXEC ELIMINAR_REGISTRO (1,'PARTIDOS')
+EXEC ELIMINAR_REGISTRO (1,'PARTIDOS');
+UPDATE PARTIDOS  SET SOFT_DELETION = 0  WHERE ID = 2;
+SELECT * FROM PARTIDOS;
 
-UPDATE PARTIDOS  SET SOFT_DELETION = 0  WHERE ID = 2
-
-SELECT * FROM PARTIDOS
 
 /*
-Crear un procedimiento que coloque un partido en estado "FINALIZADO", 
+C. Crear un procedimiento que coloque un partido en estado "FINALIZADO", 
 en ese momento deberá calcular las ganancias y pérdidas de cada apuesta hecha asociada a ese partido.
 */
 
@@ -984,8 +981,7 @@ BEGIN
     INNER JOIN DETALLES_APUESTAS DAP
     ON CU.ID = DAP.ID_CUOTA
     INNER JOIN APUESTAS APU
-    ON DAP.ID_APUESTA = APU.ID
-    
+    ON DAP.ID_APUESTA = APU.ID    
 END;
 
 

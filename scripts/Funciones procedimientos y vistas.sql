@@ -918,11 +918,35 @@ la idea de este procedimiento es que active el soft deletion de dicho registro u
 Deberá tener manejo de excepciones dado el caso que el nombre de la tabla y/o el id no existan. 
 */
 
-CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO (NOMBRE_TABLA VARCHAR2(255), ID_REGISTRO NUMBER) AS
+CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO (NOMBRE_TABLA VARCHAR2, ID_REGISTRO NUMBER) AS
     sql_stmt  VARCHAR2(255);
 BEGIN
-    sql_stmt := 'UPDATE'|| NOMBRE_TABLA || 'SET SOFT_DELETION = 0 WHERE ID = '|| ID_REGISTRO;
-    EXECUTE IMMEDIATE sql_stmt
+    sql_stmt := 'UPDATE '|| NOMBRE_TABLA || ' SET SOFT_DELETION = 0 WHERE ID = '|| ID_REGISTRO;
+    EXECUTE IMMEDIATE sql_stmt;
+    
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE ('El ID no existe en la tabla.');
+END;
+
+update usuarios set soft_deletion = 0 where id= 100;
+
+/*
+Crear un procedimiento que coloque un partido en estado "FINALIZADO", 
+en ese momento deberá calcular las ganancias y pérdidas de cada apuesta hecha asociada a ese partido.
+*/
+
+CREATE OR REPLACE PROCEDURE PARTIDO_FINALIZADO () AS
+
+BEGIN
+    UPDATE PARTIDOS SET ESTADO = 'FINALIZADO'
+    SELECT * FROM PARTIDOS PA INNER JOIN CUOTAS CU
+    ON PA.ID = CU.ID_PARTIDO
+    INNER JOIN DETALLES_APUESTAS DAP
+    ON CU.ID = DAP.ID_CUOTA
+    INNER JOIN APUESTAS APU
+    ON DAP.ID_APUESTA = APU.ID
+    
 END;
 
 
@@ -930,23 +954,6 @@ END;
 
 
 
-
-
-CREATE OR REPLACE PROCEDURE ELIMINAR_REGISTRO(ID_CAMPO NUMBER, NOMBRE_TABLA VARCHAR2)                                             
-IS
-  mi_codigo varchar2(500);
-BEGIN
-  mi_codigo := 'UPDATE '||  NOMBRE_TABLA ||' SET SOFT_DELETION = 0 WHERE ID ='|| ID_CAMPO ;
-
-  EXECUTE IMMEDIATE mi_codigo;
-   
-END ;
-
-EXEC ELIMINAR_REGISTRO (32,'PARTIDOS')
-
-SELECT * FROM PARTIDOS
-
-SELECT SOFT_DELETION FROM PARTIDOS WHERE ID = 32
 
 
 

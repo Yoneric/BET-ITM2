@@ -986,10 +986,37 @@ END;
 
 
 
+/*Crear un procedimiento que reciba el ID de una APUESTA (Las que efectuan los usuarios) y reciba: 
+id_usuario, valor, tipo_apuesta_id, cuota, opción ganadora (Ya cada uno mirará como manejan esta parte 
+conforme al diseño que tengan). Con estos parámetros deberá insertar un registro en la tabla detalles de 
+apuesta en estado "ABIERTA".*/
 
+CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUOTA NUMBER, V_VALOR_APOSTADO NUMBER, V_CUOTA VARCHAR2) IS
+   
+ CONSULTA VARCHAR2(500);
+ 
+  BEGIN 
+   
+   CONSULTA := 'INSERT INTO DETALLES_APUESTAS (OPCION_CUOTA, ESTADO,VALOR_APOSTADO, ID_APUESTA,ID_CUOTA, SOFT_DELETION ) 
+    VALUES ( ' || V_CUOTA || ',  ''ABIERTA'' , ' || V_VALOR_APOSTADO || ', ' || V_ID_APUESTA || ', '|| V_ID_CUOTA || ', 1)';
+   
+  
+    DBMS_OUTPUT.PUT_LINE(CONSULTA);
+    EXECUTE IMMEDIATE CONSULTA;
+    
+  END;  
+  
+  EXEC CREAR_DETALLE_APUESTA (1001,63,50000,'2.30')
+  
+    /*Crear un procedimiento que permita procesar el retiro de ganancias, recibirá el monto solicitado 
+    y el id del usuario, este procedimiento deberá insertar un registro en la tabla movimientos / retiros en estado
+    "PENDIENTE", posteriormente deberá validar si el saldo es suficiente, si el usuario ha proveído toda la 
+    documentación exigida. También validará que si tenga una cuenta y un banco válido registrado. Si todo se 
+    valida sin problemas, deberá colocar el estado "APROBADO" en el registro correspondiente y deberá restar 
+    del saldo disponible el valor retirado. Si el procedimiento falla alguna validación, el estado pasará a 
+    "RECHAZADO". El sistema deberá almacenar cuál es la novedad por la cual se rechazó (Ya ustedes deciden si 
+    crean una nueva tabla, o colocan en la tabla de retiros una columna de observaciones).*/
+    
+    CREATE OR REPLACE PROCEDURE PROCESAR_RETIROS (MONTO NUMBER, V_ID_USUAIRO NUMBER) IS
 
-
-
-
-
-
+    SELECT * FROM RETIROS

@@ -58,19 +58,16 @@ CREATE OR REPLACE VIEW RESUMEN_APUESTAS AS
 SELECT * FROM RESUMEN_APUESTAS WHERE APUESTA = 1001
 
 /*
-D.  Para la siguiente vista deberán alterar el manejo de sesiones de usuario, 
-el sistema deberá guardar el timestamp de la hora de sesión 
-y el timestamp del fin de sesión, si el usuario tiene el campo fin de sesión en null, 
-significa que la sesión está activa. 
-Crear una vista que traiga las personas que tienen una sesión activa, ordenado por la hora de inicio de sesión, 
-mostrando las personas que más tiempo llevan activas; adicional, deberá tener una columna que calcule 
-cuántas horas lleva en el sistema con respecto a la hora actual, 
-la siguiente columna será la cantidad de horas seleccionada 
-en las preferencias de usuario, finalmente, habrá una columna 
-que reste cuánto tiempo le falta para que se cierre la sesión 
-(si aparece un valor negativo, significa que el usuario excedió el tiempo en el sistema)
+D. Para la siguiente vista deberán alterar el manejo de sesiones de usuario, 
+el sistema deberá guardar el timestamp de la hora de sesión y el timestamp del fin de sesión, 
+si el usuario tiene el campo fin de sesión en null, significa que la sesión está activa. 
+Crear una vista que traiga las personas que tienen una sesión activa, 
+ordenado por la hora de inicio de sesión, mostrando las personas que más tiempo llevan activas; 
+adicional, deberá tener una columna que calcule cuántas horas lleva en el sistema con respecto a la hora actual, 
+la siguiente columna será la cantidad de horas seleccionada en las preferencias de usuario, finalmente, 
+habrá una columna que reste cuánto tiempo le falta para que se cierre la sesión (si aparece un valor negativo, 
+significa que el usuario excedió el tiempo en el sistema)
 */
-
 
 CREATE OR REPLACE FUNCTION DIFERENCIA_HORAS(HORA_1 TIMESTAMP, HORA_2 TIMESTAMP) RETURN NUMBER as
   dias integer;
@@ -87,46 +84,20 @@ BEGIN
   RETURN total_diferencia;
 END;
 
-
-SELECT DIFERENCIA_HORAS(current_timestamp, TO_TIMESTAMP('11/5/2019 15:10:35.000', 'MM/DD/YYYY HH24:MI:SS.FF')) from dual;
-
-select id, login_at, diferencia_horas(current_timestamp, login_at) as diferencia from usuarios2;
-
-declare
-  hora_2 TIMESTAMP := TO_TIMESTAMP('11/5/2019 15:10:35.000', 'MM/DD/YYYY HH24:MI:SS.FF');
-  resultado number := 0;
-begin
-  resultado := diferencia_horas(current_timestamp, hora_2);
-  dbms_output.put_line('La diferencia de horas es: '||resultado);
-end;
-
-
-DECLARE
-  id usuarios.id%TYPE;
-  first_name usuarios.first_name%TYPE;
-  last_name usuarios.last_name%TYPE;
-  login_at usuarios.login_at%TYPE;
-  cerrar_sesion usuarios.cerrar_sesion%TYPE;
-  resultado VARCHAR2(255);
-  CURSOR c_usuarios IS select id, first_name, last_name, login_at, cerrar_sesion from usuarios2;
+CREATE OR REPLACE FUNCTION SUMA_HORAS(HORA_1 NUMBER, HORA_2 NUMBER) RETURN NUMBER as
+  tiempo_transcurrido NUMBER;
 BEGIN
-  OPEN c_usuarios;
-    LOOP
-      FETCH c_usuarios INTO id, first_name, last_name, login_at, cerrar_sesion;
-      
-      IF DIFERENCIA_HORAS(CURRENT_TIMESTAMP, login_at) > cerrar_sesion THEN
-        RESULTADO := 'TIEMPO EXPIRADO.';
-      ELSE
-        RESULTADO := 'PUEDE SEGUIR LOGUEADO.';
-      END IF;
-      
-      dbms_output.put_line('id: ' || id || '. Diferencia horas: '|| DIFERENCIA_HORAS(CURRENT_TIMESTAMP, login_at) || ' ' ||RESULTADO);
-      EXIT WHEN c_usuarios%notfound;
-    END LOOP;
-  CLOSE c_usuarios;
+  tiempo_transcurrido := hora_1 - hora_2;
+  
+  RETURN tiempo_transcurrido;
 END;
 
-
+CREATE OR REPLACE VIEW SESION_ACTIVA AS
+    SELECT SUBSTR(INICIO_SESION,1,15) HORA_INCIO, DIFERENCIA_HORAS (CURRENT_TIMESTAMP, SE.INICIO_SESION) HORAS_ACTIVAS, US.HORAS_SESION, SUMA_HORAS(US.HORAS_SESION, DIFERENCIA_HORAS(CURRENT_TIMESTAMP, SE.INICIO_SESION)) TIEMPO_RESTANTE
+    FROM SESIONES SE INNER JOIN USUARIOS US
+    ON SE.ID_USUARIO = US.ID
+    WHERE SE.ESTADO_CONEXION = 1
+    ORDER BY HORAS_ACTIVAS DESC;
 
 
 -- TRIGGERS
@@ -1139,66 +1110,4 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     
     
     
-/*
-Para la siguiente vista deberán alterar el manejo de sesiones de usuario, 
-el sistema deberá guardar el timestamp de la hora de sesión y el timestamp del fin de sesión, 
-si el usuario tiene el campo fin de sesión en null, significa que la sesión está activa. 
-Crear una vista que traiga las personas que tienen una sesión activa, 
-ordenado por la hora de inicio de sesión, mostrando las personas que más tiempo llevan activas; 
-adicional, deberá tener una columna que calcule cuántas horas lleva en el sistema con respecto a la hora actual, 
-la siguiente columna será la cantidad de horas seleccionada en las preferencias de usuario, finalmente, 
-habrá una columna que reste cuánto tiempo le falta para que se cierre la sesión (si aparece un valor negativo, 
-significa que el usuario excedió el tiempo en el sistema)
-*/
 
-CREATE OR REPLACE FUNCTION DIFERENCIA_HORAS(HORA_1 TIMESTAMP, HORA_2 TIMESTAMP) RETURN NUMBER as
-  dias integer;
-  horas integer;
-  tiempo_transcurrido INTERVAL DAY TO SECOND;
-  total_diferencia integer;
-BEGIN
-  tiempo_transcurrido := hora_2 - hora_1;
-  dias := EXTRACT(day from tiempo_transcurrido);
-  horas := EXTRACT(hour from tiempo_transcurrido); 
-  
-  total_diferencia := abs(dias*24 + horas);
-  
-  RETURN total_diferencia;
-END;
-
-CREATE OR REPLACE FUNCTION SUMA_HORAS(HORA_1 NUMBER, HORA_2 NUMBER) RETURN NUMBER as
-  tiempo_transcurrido NUMBER;
-BEGIN
-  tiempo_transcurrido := hora_1 - hora_2;
-  
-  RETURN tiempo_transcurrido;
-END;
-
-ALTER TABLE USUARIOS ADD HORAS_SESION NUMBER
-
-CREATE OR REPLACE VIEW SESION_ACTIVA AS
-    SELECT SUBSTR(INICIO_SESION,1,15) HORA_INCIO, DIFERENCIA_HORAS (CURRENT_TIMESTAMP, SE.INICIO_SESION) HORAS_ACTIVAS, US.HORAS_SESION, SUMA_HORAS(US.HORAS_SESION, DIFERENCIA_HORAS(CURRENT_TIMESTAMP, SE.INICIO_SESION)) TIEMPO_RESTANTE
-    FROM SESIONES SE INNER JOIN USUARIOS US
-    ON SE.ID_USUARIO = US.ID
-    WHERE SE.ESTADO_CONEXION = 1
-    ORDER BY HORAS_ACTIVAS DESC;
-    
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
->>>>>>> 3aed626fea594ca5480c90d41d3ac6939d330d81

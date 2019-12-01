@@ -1067,6 +1067,7 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
         DBMS_OUTPUT.PUT_LINE('SI TIENES SALDO');   
     END IF; 
     
+<<<<<<< HEAD
     END;
   
   
@@ -1077,3 +1078,127 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     
     SELECT * FROM COMPROBANTES
     
+=======
+    CREATE OR REPLACE PROCEDURE PROCESAR_RETIROS (MONTO NUMBER, V_ID_USUAIRO NUMBER) IS
+=======
+ 
+>>>>>>> 91bc4aae606917722aa2412e1aabbf834fba64f8
+
+    SELECT * FROM RETIROS
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+/*
+Para la siguiente vista deberán alterar el manejo de sesiones de usuario, 
+el sistema deberá guardar el timestamp de la hora de sesión y el timestamp del fin de sesión, 
+si el usuario tiene el campo fin de sesión en null, significa que la sesión está activa. 
+Crear una vista que traiga las personas que tienen una sesión activa, 
+ordenado por la hora de inicio de sesión, mostrando las personas que más tiempo llevan activas; 
+adicional, deberá tener una columna que calcule cuántas horas lleva en el sistema con respecto a la hora actual, 
+la siguiente columna será la cantidad de horas seleccionada en las preferencias de usuario, finalmente, 
+habrá una columna que reste cuánto tiempo le falta para que se cierre la sesión (si aparece un valor negativo, 
+significa que el usuario excedió el tiempo en el sistema)
+*/
+
+CREATE OR REPLACE FUNCTION DIFERENCIA_HORAS(HORA_1 TIMESTAMP, HORA_2 TIMESTAMP) RETURN NUMBER as
+  dias integer;
+  horas integer;
+  tiempo_transcurrido INTERVAL DAY TO SECOND;
+  total_diferencia integer;
+BEGIN
+  tiempo_transcurrido := hora_2 - hora_1;
+  dias := EXTRACT(day from tiempo_transcurrido);
+  horas := EXTRACT(hour from tiempo_transcurrido); 
+  
+  total_diferencia := abs(dias*24 + horas);
+  
+  RETURN total_diferencia;
+END;
+
+CREATE OR REPLACE FUNCTION SUMA_HORAS(HORA_1 NUMBER, HORA_2 NUMBER) RETURN NUMBER as
+  tiempo_transcurrido NUMBER;
+BEGIN
+  tiempo_transcurrido := hora_1 - hora_2;
+  
+  RETURN tiempo_transcurrido;
+END;
+
+ALTER TABLE USUARIOS ADD HORAS_SESION NUMBER
+
+CREATE OR REPLACE VIEW SESION_ACTIVA AS
+    SELECT SUBSTR(INICIO_SESION,1,15) HORA_INCIO, DIFERENCIA_HORAS (CURRENT_TIMESTAMP, SE.INICIO_SESION) HORAS_ACTIVAS, US.HORAS_SESION, SUMA_HORAS(US.HORAS_SESION, DIFERENCIA_HORAS(CURRENT_TIMESTAMP, SE.INICIO_SESION)) TIEMPO_RESTANTE
+    FROM SESIONES SE INNER JOIN USUARIOS US
+    ON SE.ID_USUARIO = US.ID
+    WHERE SE.ESTADO_CONEXION = 1
+    ORDER BY HORAS_ACTIVAS DESC;
+    
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+>>>>>>> 3aed626fea594ca5480c90d41d3ac6939d330d81

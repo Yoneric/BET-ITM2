@@ -963,8 +963,7 @@ EXCEPTION
 END ;
 
 EXEC ELIMINAR_REGISTRO (1,'PARTIDOS');
-UPDATE PARTIDOS  SET SOFT_DELETION = 0  WHERE ID = 2;
-SELECT * FROM PARTIDOS;
+
 
 
 /*
@@ -1005,12 +1004,11 @@ END;
 
 
 
-/*Crear un procedimiento que reciba el ID de una APUESTA (Las que efectuan los usuarios) y reciba: 
+/*D Crear un procedimiento que reciba el ID de una APUESTA (Las que efectuan los usuarios) y reciba: 
 id_usuario, valor, tipo_apuesta_id, cuota, opción ganadora (Ya cada uno mirará como manejan esta parte 
 conforme al diseño que tengan). Con estos parámetros deberá insertar un registro en la tabla detalles de 
 apuesta en estado "ABIERTA".*/
 
-<<<<<<< HEAD
 CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUOTA NUMBER, V_VALOR_APOSTADO NUMBER, V_CUOTA VARCHAR2) IS
    
  CONSULTA VARCHAR2(500);
@@ -1026,7 +1024,7 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     
   END;  
   
-  EXEC CREAR_DETALLE_APUESTA (1001,63,50000,'2.30')
+  EXEC CREAR_DETALLE_APUESTA (1001,63,50000,'2.30');
   
     /*Crear un procedimiento que permita procesar el retiro de ganancias, recibirá el monto solicitado 
     y el id del usuario, este procedimiento deberá insertar un registro en la tabla movimientos / retiros en estado
@@ -1036,10 +1034,46 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     del saldo disponible el valor retirado. Si el procedimiento falla alguna validación, el estado pasará a 
     "RECHAZADO". El sistema deberá almacenar cuál es la novedad por la cual se rechazó (Ya ustedes deciden si 
     crean una nueva tabla, o colocan en la tabla de retiros una columna de observaciones).*/
-    
-    CREATE OR REPLACE PROCEDURE PROCESAR_RETIROS (MONTO NUMBER, V_ID_USUAIRO NUMBER) IS
-=======
+  
+  
+   CREATE OR REPLACE PROCEDURE PROCESAR_RETIROS (MONTO NUMBER, V_ID_USUARIO NUMBER, BANCO VARCHAR2, CUENTA VARCHAR2, V_ID_COMPROBANTE NUMBER) IS
  
->>>>>>> 91bc4aae606917722aa2412e1aabbf834fba64f8
-
-    SELECT * FROM RETIROS
+    V_FECHA_SOLICITUD TIMESTAMP;
+    V_FECHA_DESEMBOLSO TIMESTAMP;
+    CONSULTA VARCHAR2 (500);
+    CONSULTA2 VARCHAR2 (500);
+    V_ID NUMBER;
+    SALDO_USUARIO NUMBER;
+     
+     BEGIN 
+   
+   SELECT current_timestamp INTO V_FECHA_SOLICITUD FROM dual;
+   SELECT SALDO INTO SALDO_USUARIO FROM USUARIOS WHERE  ID = V_ID_USUARIO;
+     
+   CONSULTA := 'INSERT INTO RETIROS (VALOR_RETIRO, FECHA_SOLICITUD, BANCO, CUENTA_BANCARIA, REQUISITO,ID_USUARIO, ID_COMPROBANTE, SOFT_DELETION, ESTADO ) 
+     VALUES ( '|| MONTO || ', to_timestamp('''|| V_FECHA_SOLICITUD || ''', ''DD/MM/RR HH24:MI:SSXFF''),'' '   || BANCO  || ' '', '' '|| CUENTA || ' '', 0 , '|| V_ID_USUARIO || ',1 , 1,''PENDIENTE'')';
+      
+      --EXECUTE IMMEDIATE CONSULTA;
+   DBMS_OUTPUT.PUT_LINE(consulta);   
+ 
+     IF SALDO_USUARIO = 0 OR SALDO_USUARIO < MONTO  THEN
+     
+          --SELECT ID INTO V_ID FROM RETIROS  WHERE ID_USUARIO = 984 AND ROWNUM = 1 ORDER BY (ID) DESC ;
+          CONSULTA2 := 'UPDATE RETIROS SET ESTADO = ''RECHAZADO'' WHERE ID = '||V_ID;
+          
+         -- EXECUTE IMMEDIATE CONSULTA2;
+         DBMS_OUTPUT.PUT_LINE(CONSULTA2);   
+     ELSE 
+        DBMS_OUTPUT.PUT_LINE('SI TIENES SALDO');   
+    END IF; 
+    
+    END;
+  
+  
+    EXEC PROCESAR_RETIROS(10000000,1008,'BANCOLOMBIA','223342',1);
+    
+    SELECT RE.ID AS NUMERO_RETIRO, COM.ID AS NUMERO_COMPROBANTE FROM COMPROBANTES COM INNER JOIN RETIROS RE
+    ON COM.ID = RE.ID_COMPROBANTE
+    
+    SELECT * FROM COMPROBANTES
+    

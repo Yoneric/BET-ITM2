@@ -1120,7 +1120,7 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
  END;
  
     EXEC PROCESAR_RETIROS(200000,1008,'BANCOLOMBIA','223342',1);
-=======
+
     SELECT * FROM COMPROBANTES
     
 
@@ -1142,8 +1142,6 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     
     
     
->>>>>>> cdf3bf1643a3a39d55760cbc2cedc089a18b796c
-    
     SELECT SALDO FROM USUARIOS WHERE ID = 1008
     UPDATE USUARIOS SET SALDO = 12000000 WHERE ID = 1008 
     
@@ -1152,52 +1150,6 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     SELECT SALDO FROM USUARIOS WHERE  ID = 1008
     DELETE RETIROS 
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-
-
-
-
-
-
-
-
 /*
 Crear un procedimiento que permita realizar un depósito, similar al procedimiento anterior, 
 deberá validar los posibles casos para que se apruebe / se rechace esta transacción. 

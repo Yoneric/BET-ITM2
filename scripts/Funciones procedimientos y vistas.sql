@@ -23,7 +23,7 @@ los detalles de apuestas simples que se efectuaron para un boleto en particular.
 */
 
 CREATE OR REPLACE VIEW DETALLE_APUESTAS AS 
-  SELECT  E.EQUIPO ||' VS '|| E2.EQUIPO "PARTIDO", DAP.OPCION_CUOTA, C.CUOTA_GANADORA,CA.NOMBRE "CATEGORÍA", AP.ID "APUESTA"
+  SELECT  E.EQUIPO ||' VS '|| E2.EQUIPO "PARTIDO", DAP.OPCION_CUOTA, DAP.CUOTA_GANADORA,CA.NOMBRE "CATEGORÍA", AP.ID "APUESTA"
   FROM   PARTIDOS P  
   INNER JOIN  EQUIPOS E  
   ON E.ID = P.ID_LOCAL 
@@ -34,11 +34,12 @@ CREATE OR REPLACE VIEW DETALLE_APUESTAS AS
   INNER JOIN CATEGORIAS CA
   ON CA.ID = C.ID_CATEGORIA
   INNER JOIN DETALLES_APUESTAS DAP
-  ON C.ID = DAP.ID_CUOTA
+  ON C.ID = DAP.ID
   INNER JOIN APUESTAS AP
   ON AP.ID = DAP.ID_APUESTA
+  
+SELECT * FROM DETALLE_APUESTAS WHERE APUESTA = 1
 
-SELECT * FROM DETALLE_APUESTAS WHERE APUESTA = 1001
 
 
 /* 
@@ -55,7 +56,7 @@ CREATE OR REPLACE VIEW RESUMEN_APUESTAS AS
   ON AP.ID = DAP.ID_APUESTA
   GROUP BY DAP.VALOR_APOSTADO,AP.ID
 
-SELECT * FROM RESUMEN_APUESTAS WHERE APUESTA = 1001
+SELECT * FROM RESUMEN_APUESTAS WHERE APUESTA = 3
 
 /*
 D. Para la siguiente vista deberán alterar el manejo de sesiones de usuario, 
@@ -99,6 +100,8 @@ CREATE OR REPLACE VIEW SESION_ACTIVA AS
     WHERE SE.ESTADO_CONEXION = 1
     ORDER BY HORAS_ACTIVAS DESC;
 
+SELECT  *  FROM SESION_ACTIVA
+
 
 -- TRIGGERS
 /* 
@@ -140,8 +143,6 @@ BEGIN
 
  END;
  
-UPDATE USUARIOS SET SALDO = 1500000 WHERE ID  = 1008
-
   
 CREATE OR REPLACE TRIGGER AUDITORIA_PARTIDOS
   AFTER INSERT OR UPDATE
@@ -743,7 +744,9 @@ BEGIN
 
  END;
  
+ UPDATE USUARIOS SET SALDO = 1 WHERE ID =  1
  
+ SELECT * FROM AUDITORIA
  /*
  B. Crear un(os) trigger(s) que permita(n) mantener el saldo del usuario ACTUALIZADO, 
  es decir, si se produce un retiro, una recarga, una apuesta o hay ganancias de una apuesta, 
@@ -784,24 +787,9 @@ CREATE OR REPLACE TRIGGER SALDO_DEPOSITOS
   UPDATE USUARIOS SET SALDO = SALDO + :new.VALOR WHERE USUARIOS.ID = :new.id_usuario;
  END;
 
- 
-select * from retiros;
-select * from depositos;
-select saldo from usuarios where id  = 984;
+ DROP TRIGGER SALDO_DEPOSITOS
 
- 
-Insert into DBA_JULIAN.APUESTAS (ID_USUARIO,VALOR_TOTAL,TOTAL_GANANCIAS,FECHA,ID_ESTADO,SOFT_DELETION) 
-values (1008,'0','0',to_date('18/07/19','DD/MM/RR'),'3','1');
-
- 
-Insert into DBA_JULIAN.RETIROS (VALOR_RETIRO,FECHA_SOLICITUD,FECHA_DESEMBOLSO,BANCO,CUENTA_BANCARIA,REQUISITO,ID_USUARIO,ID_COMPROBANTE,SOFT_DELETION)
-values (100000,to_timestamp('06/06/08 18:30:34,000000000','DD/MM/RR HH24:MI:SSXFF'),to_timestamp('07/06/08 18:30:34,000000000','DD/MM/RR HH24:MI:SSXFF'),'BANCOLOMBIA','56487764532','1','984','1','1');
- 
-
-Insert into DBA_JULIAN.DEPOSITOS (VALOR,FECHA,ID_USUARIO,ID_ESTADO,ID_MEDIO_DE_PAGO,SOFT_DELETION) 
-values ('500000',to_timestamp('05/02/08 18:12:54,000000000','DD/MM/RR HH24:MI:SSXFF'),'984','4','1','1');
- 
-
+  
 /*
 C. Crear un trigger asociado a la tabla PARTIDOS, este trigger se disparará solamente cuando 
 el partido pase a estado "FINALIZADO". El propósito de este trigger es ejecutar el o 
@@ -834,10 +822,6 @@ BEGIN
   END IF;
 END; 
 
-
-UPDATE PARTIDOS SET ESTADO = 'FINALIZADO' WHERE ID = 31;
-SELECT ESTADO FROM PARTIDOS WHERE ID = 31;
-
 /*
 D. Crear un trigger asociado a la tabla DETALLES_APUESTAS, este trigger mantendrá actualizado el 
 campo "valor_total" de la tabla APUESTAS
@@ -868,15 +852,6 @@ BEGIN
   END IF; 
 END;
  
- 
-SELECT SUM(VALOR_APOSTADO) FROM DETALLES_APUESTAS WHERE ID_APUESTA = 1084;
-SELECT * FROM APUESTAS WHERE ID = 1084;
-DELETE FROM DETALLES_APUESTAS WHERE ID_APUESTA = 1084;
-UPDATE APUESTAS SET VALOR_TOTAL = 0 WHERE ID = 1084;
-
-Insert into DBA_JULIAN.DETALLES_APUESTAS (OPCION_CUOTA,CUOTA_GANADORA,ESTADO,VALOR_APOSTADO,ID_APUESTA,ID_CUOTA,SOFT_DELETION) values 
-('1.60','1.60','GANADO',30000,1084,101,1);
-
 
 ------------------------Funciones---------------------------------------------------------------------------------
 /*
@@ -938,7 +913,6 @@ END ;
 EXEC ELIMINAR_REGISTRO (1,'PARTIDOS');
 
 
-
 /*
 C. Crear un procedimiento que coloque un partido en estado "FINALIZADO", 
 en ese momento deberá calcular las ganancias y pérdidas de cada apuesta hecha asociada a ese partido.
@@ -975,6 +949,7 @@ DECLARE
     END;
 END;
 
+EXEC PARTIDO_FINALIZADO (1);
 
 
 /*D Crear un procedimiento que reciba el ID de una APUESTA (Las que efectuan los usuarios) y reciba: 
@@ -997,7 +972,7 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     
   END;  
   
-  EXEC CREAR_DETALLE_APUESTA (1001,63,50000,'2.30');
+  EXEC CREAR_DETALLE_APUESTA (8,1,50000,'2.3');
   
     /*Crear un procedimiento que permita procesar el retiro de ganancias, recibirá el monto solicitado 
     y el id del usuario, este procedimiento deberá insertar un registro en la tabla movimientos / retiros en estado
@@ -1116,22 +1091,10 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
   END ; 
  END;
  
-    EXEC PROCESAR_RETIROS(10000000,1008,'BANCOLOMBIA','223342',1);
+    EXEC PROCESAR_RETIROS(50000,1,'BANCOLOMBIA','223342',1);
 
-    SELECT * FROM COMPROBANTES
-    SELECT SALDO FROM USUARIOS WHERE ID = 1008
-    
-    SELECT * FROM RETIROS
-    
 
-    SELECT SALDO FROM USUARIOS WHERE ID = 1008
-    UPDATE USUARIOS SET SALDO = 12000000 WHERE ID = 1008 
-    
-    SELECT * FROM RETIROS   ORDER BY ID
    
-    SELECT SALDO FROM USUARIOS WHERE  ID = 1008
-    DELETE RETIROS 
-    
 /*
 Crear un procedimiento que permita realizar un depósito, similar al procedimiento anterior, 
 deberá validar los posibles casos para que se apruebe / se rechace esta transacción. 
@@ -1150,7 +1113,7 @@ BEGIN
     VALUES (VAR_MONTO, CURRENT_TIMESTAMP, VAR_ID_USUARIO, 2, VAR_ID_MEDIOS_PAGO, 1);
     
     SELECT ID INTO V_ID_DEPOSITO FROM DEPOSITOS WHERE ID_USUARIO = VAR_ID_USUARIO AND ROWNUM = 1 ORDER BY ID DESC;
-        
+        DBMS_OUTPUT.PUT_LINE(V_ID_DEPOSITO);
     SELECT VALOR_MINIMO INTO V_MINIMO FROM MEDIOS_DE_PAGO WHERE ID = VAR_ID_MEDIOS_PAGO;
     SELECT VALOR_MAXIMO INTO V_MAXIMO FROM MEDIOS_DE_PAGO WHERE ID = VAR_ID_MEDIOS_PAGO;    
     
@@ -1162,10 +1125,14 @@ BEGIN
     END IF;
 END;
 
+ SELECT ID  FROM DEPOSITOS  WHERE ID_USUARIO = 1 AND ROWNUM = 1 ORDER BY (ID) DESC ;
+                   
 
-EXEC REALIZAR_DEPOSITO(50000, 3 , 1 );
+EXEC REALIZAR_DEPOSITO(200, 3 , 1 );
 
+    SELECT SALDO FROM USUARIOS WHERE ID = 1
     
+    SELECT * FROM DEPOSITOS
 /*
 F. Crear un procedimiento almacenado que invoque la vista de sesiones activas y coloque el campo fin de sesión con el timestamp actual, 
 esto aplicará solo para aquellos usuarios que han excedido el tiempo en el sistema dependiendo de sus preferencias personales.   
@@ -1220,6 +1187,4 @@ BEGIN
     END IF;
 END;
 
-
-SELECT * FROM CUOTAS WHERE ID_PARTIDO = 1 
 

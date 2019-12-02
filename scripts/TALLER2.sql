@@ -524,7 +524,10 @@ ALTER TABLE SESIONES
   REFERENCES USUARIOS(ID);
   
   
-  
+ 
+alter table usuarios
+ add constraint CK__saldo_positivo
+ check (saldo>=0); 
   
 
   

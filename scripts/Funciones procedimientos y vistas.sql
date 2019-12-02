@@ -93,7 +93,7 @@ BEGIN
 END;
 
 CREATE OR REPLACE VIEW SESION_ACTIVA AS
-    SELECT SUBSTR(INICIO_SESION,1,15) HORA_INCIO, DIFERENCIA_HORAS (CURRENT_TIMESTAMP, SE.INICIO_SESION) HORAS_ACTIVAS, US.HORAS_SESION, SUMA_HORAS(US.HORAS_SESION, DIFERENCIA_HORAS(CURRENT_TIMESTAMP, SE.INICIO_SESION)) TIEMPO_RESTANTE
+    SELECT SE.ID, SUBSTR(INICIO_SESION,1,15) HORA_INCIO, DIFERENCIA_HORAS (CURRENT_TIMESTAMP, SE.INICIO_SESION) HORAS_ACTIVAS, US.HORAS_SESION, SUMA_HORAS(US.HORAS_SESION, DIFERENCIA_HORAS(CURRENT_TIMESTAMP, SE.INICIO_SESION)) TIEMPO_RESTANTE
     FROM SESIONES SE INNER JOIN USUARIOS US
     ON SE.ID_USUARIO = US.ID
     WHERE SE.ESTADO_CONEXION = 1
@@ -1036,9 +1036,7 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
          DBMS_OUTPUT.PUT_LINE(CONSULTA2);   
      ELSE 
         DBMS_OUTPUT.PUT_LINE('SI TIENES SALDO');   
-    END IF; 
-    
-<<<<<<< HEAD
+    END IF;
     END;
   
   
@@ -1049,11 +1047,9 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     
     SELECT * FROM COMPROBANTES
     
-=======
+
     CREATE OR REPLACE PROCEDURE PROCESAR_RETIROS (MONTO NUMBER, V_ID_USUAIRO NUMBER) IS
-=======
- 
->>>>>>> 91bc4aae606917722aa2412e1aabbf834fba64f8
+
 
     SELECT * FROM RETIROS
     
@@ -1110,4 +1106,108 @@ CREATE OR REPLACE PROCEDURE CREAR_DETALLE_APUESTA (V_ID_APUESTA NUMBER, V_ID_CUO
     
     
     
+
+
+
+
+
+
+
+
+
+/*
+Crear un procedimiento que permita realizar un depósito, similar al procedimiento anterior, 
+deberá validar los posibles casos para que se apruebe / se rechace esta transacción. 
+Ejemplo, validar los montos mínimos y máximos para cada medio de pago. 
+Si hay alguna novedad guardar el motivo por el cual fue rechazado. 
+El sistema deberá validar los límites de depósitos para cada usuario.
+*/
+
+CREATE OR REPLACE PROCEDURE REALIZAR_DEPOSITO (VAR_MONTO NUMERIC, VAR_ID_MEDIOS_PAGO NUMERIC, VAR_ID_USUARIO NUMERIC)
+IS
+    V_MAXIMO NUMBER;
+    V_MINIMO NUMBER;
+    V_ID_DEPOSITO NUMBER;
+BEGIN
+    INSERT INTO DEPOSITOS (VALOR, FECHA, ID_USUARIO, ID_ESTADO, ID_MEDIO_DE_PAGO, SOFT_DELETION)
+    VALUES (VAR_MONTO, CURRENT_TIMESTAMP, VAR_ID_USUARIO, 2, VAR_ID_MEDIOS_PAGO, 1);
+    
+    SELECT ID INTO V_ID_DEPOSITO FROM DEPOSITOS WHERE ID_USUARIO = VAR_ID_USUARIO AND ROWNUM = 1 ORDER BY ID DESC;
+        
+    SELECT VALOR_MINIMO INTO V_MINIMO FROM MEDIOS_DE_PAGO WHERE ID = VAR_ID_MEDIOS_PAGO;
+    SELECT VALOR_MAXIMO INTO V_MAXIMO FROM MEDIOS_DE_PAGO WHERE ID = VAR_ID_MEDIOS_PAGO;    
+    
+    IF (VAR_MONTO >= V_MINIMO) AND (VAR_MONTO <= V_MAXIMO) THEN
+        UPDATE DEPOSITOS SET ID_ESTADO = 4, OBSERVACIONES = 'APROBADO' WHERE ID = V_ID_DEPOSITO;
+        UPDATE USUARIOS SET SALDO = (SALDO + VAR_MONTO) WHERE ID = VAR_ID_USUARIO;
+    ELSE
+        UPDATE DEPOSITOS SET OBSERVACIONES = 'El monto no cumple con el rango asignado por el medio de pago.', ID_ESTADO = 3 WHERE ID = V_ID_DEPOSITO;
+    END IF;
+END;
+
+EXEC REALIZAR_DEPOSITO(50000, 3 , 1 );
+
+    
+/*
+F. Crear un procedimiento almacenado que invoque la vista de sesiones activas y coloque el campo fin de sesión con el timestamp actual, 
+esto aplicará solo para aquellos usuarios que han excedido el tiempo en el sistema dependiendo de sus preferencias personales.   
+*/
+
+CREATE OR REPLACE PROCEDURE FIN_SESION
+AS
+
+BEGIN
+DECLARE
+    CURSOR CURSOR_FIN_SESION IS
+    SELECT ID, TIEMPO_RESTANTE FROM SESION_ACTIVA;    
+    
+    V_ID_SESION NUMBER;
+    V_TIEMPO_RESTANTE NUMBER;
+    
+    BEGIN
+        OPEN CURSOR_FIN_SESION;
+        LOOP
+            FETCH CURSOR_FIN_SESION INTO V_ID_SESION, V_TIEMPO_RESTANTE;
+                IF V_TIEMPO_RESTANTE < 0 THEN
+                    UPDATE SESIONES SET FIN_SESION = CURRENT_TIMESTAMP, ESTADO_CONEXION = 0 WHERE ID = V_ID_SESION ;
+                END IF;                
+            EXIT WHEN CURSOR_FIN_SESION%NOTFOUND;
+        END LOOP;            
+        CLOSE CURSOR_FIN_SESION;
+    END;
+END;
+
+EXEC FIN_SESION
+
+
+/*
+Crear un procedimiento (o varios, dependiendo de como quieran manejarlo) que calculará la cuota ganadora para cada tipo de apuesta 
+utilizado (Es importante tener los datos necesarios para calcular la opción ganadora, ejemplo: goles totales, 
+goles equipo 1 primer tiempo, goles equipo 2 primer tiempo y así sucesivamente), 
+el procedimiento cumplirá las siguientes condiciones:
+*/
+
+CREATE OR REPLACE PROCEDURE CALCULAR_CUOTA(VAR_ID_PARTIDO NUMERIC)
+IS
+    V_ESTADO_PARTIDO VARCHAR2;
+BEGIN
+    SELECT ESTADO INTO V_ESTADO_PARTIDO FROM PARTIDOS WHERE ID = VAR_ID_PARTIDO;
+    
+    IF V_ESTADO_PARTIDO = 'FINALIZADO' THEN
+        DECLARE
+        CURSOR CURSOR_CUOTAS IS
+        SELECT * FROM CUOTAS WHERE ID_PARTIDO = VAR_ID_PARTIDO
+        IF (SELECT TOTAL_GOLES_PARTIDO FROM PARTIDOS WHERE ID = VAR_ID_PARTIDO)  THEN
+        END IF;
+    END IF;
+END;
+
+
+SELECT * FROM CUOTAS WHERE ID_PARTIDO = 1 
+
+
+
+
+
+
 
